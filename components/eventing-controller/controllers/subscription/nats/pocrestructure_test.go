@@ -34,6 +34,7 @@ var _ = Describe("Subscription Reconciliation Tests", func() {
 			eventTypeToSubscribe: reconcilertesting.OrderCreatedEventTypeNotCleanPrefixEmpty,
 		},
 	}
+
 	for _, testCase := range testCases {
 		Context(testCase.context, func() {
 			When("Create/Delete Subscription", func() {
