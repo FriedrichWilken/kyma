@@ -18,9 +18,7 @@ var _ = Describe("Subscription Reconciliation Tests", func() {
 		id++
 	})
 
-	testCases := []struct {
-		context, eventTypePrefix, natsSubjectToPublish, eventTypeToSubscribe string
-	}{
+	testCases := []struct{ context, eventTypePrefix, natsSubjectToPublish, eventTypeToSubscribe string }{
 		{
 			context:              "with non-empty eventTypePrefix",
 			eventTypePrefix:      reconcilertesting.EventTypePrefix,
