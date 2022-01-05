@@ -1,12 +1,12 @@
 package nats
 
 import (
-	"fmt"
 	"context"
-	v1 "k8s.io/api/core/v1"
+	"fmt"
 	eventingv1alpha1 "github.com/kyma-project/kyma/components/eventing-controller/api/v1alpha1"
 	reconcilertesting "github.com/kyma-project/kyma/components/eventing-controller/testing"
 	. "github.com/onsi/ginkgo"
+	v1 "k8s.io/api/core/v1"
 
 	. "github.com/onsi/gomega"
 )
@@ -14,26 +14,26 @@ import (
 var _ = Describe("Subscription Reconciliation Tests", func() {
 	var id int
 
+	BeforeEach(func() {
+		id++
+	})
+
 	testCases := []struct {
 		context, eventTypePrefix, natsSubjectToPublish, eventTypeToSubscribe string
 	}{
 		{
-			context:              "NATS Subscription reconciler tests with non-empty eventTypePrefix",
+			context:              "with non-empty eventTypePrefix",
 			eventTypePrefix:      reconcilertesting.EventTypePrefix,
 			natsSubjectToPublish: reconcilertesting.OrderCreatedEventType,
 			eventTypeToSubscribe: reconcilertesting.OrderCreatedEventTypeNotClean,
 		},
 		{
-			context:              "NATS Subscription reconciler tests with empty eventTypePrefix",
+			context:              "with empty eventTypePrefix",
 			eventTypePrefix:      reconcilertesting.EventTypePrefixEmpty,
 			natsSubjectToPublish: reconcilertesting.OrderCreatedEventTypePrefixEmpty,
 			eventTypeToSubscribe: reconcilertesting.OrderCreatedEventTypeNotCleanPrefixEmpty,
 		},
 	}
-	BeforeEach(func() {
-		id++
-	})
-
 	for _, testCase := range testCases {
 		Context(testCase.context, func() {
 			When("Create/Delete Subscription", func() {
