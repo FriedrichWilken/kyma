@@ -276,8 +276,14 @@ func WithNotCleanEventTypeFilter(s *eventingv1alpha1.Subscription) {
 	}
 }
 
-// WithFilter appends a filter to the existing filters of Subscription
-func WithFilter(eventSource, eventType string) SubscriptionOpt {
+// AddSpecificEventTypeFilter creates an event type filters from eventSource and  eventType and appends it to
+// subscription.
+func AddSpecificEventTypeFilter(eventSource, eventType string, subscription *eventingv1alpha1.Subscription){
+	WithSpecificEventTypeFilter(eventSource, eventType)(subscription)
+}
+
+// WithSpecificEventTypeFilter returns a SubscriptionOpt for creating a Subscription with specific event type filter.
+func WithSpecificEventTypeFilter(eventSource, eventType string) SubscriptionOpt {
 	return func(subscription *eventingv1alpha1.Subscription) {
 		if subscription.Spec.Filter == nil {
 			subscription.Spec.Filter = &eventingv1alpha1.BEBFilters{
@@ -327,7 +333,14 @@ func WithEventTypeFilter(s *eventingv1alpha1.Subscription) {
 	}
 }
 
-func WithValidSink(svcNs, svcName string, s *eventingv1alpha1.Subscription) {
+func WithValidSink(svcName, svcNamespace string) SubscriptionOpt {
+	sink := GetValidSink(svcNamespace,svcName)
+	return func(subscription *eventingv1alpha1.Subscription) {
+		subscription.Spec.Sink = sink
+	}
+}
+
+func SetValidSink(svcNs, svcName string, s *eventingv1alpha1.Subscription) {
 	s.Spec.Sink = GetValidSink(svcNs, svcName)
 }
 
