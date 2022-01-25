@@ -136,15 +136,14 @@ var _ = Describe("NATS reconciler tests", func() {
 			defaultConfiguration := &eventingv1alpha1.SubscriptionConfig{
 				MaxInFlightMessages: defaultSubsConfig.MaxInFlightMessages}
 
-			// create a context
-			ctx := context.Background()
+			// start reconciler
 			cancel = startReconciler(tc.eventTypePrefix, defaultSinkValidator, natsURL)
 			defer cancel()
 
 			// create a subscriber service
 			subscriberName := fmt.Sprintf(subscriberNameFormat, testID)
 			subscriberSvc := reconcilertesting.NewSubscriberSvc(subscriberName, namespaceName)
-
+			ctx := context.Background()
 			It("should have created a subscriber service", func() {
 				byEnsuringSubscriberSvcCreated(ctx, subscriberSvc)
 			})
@@ -830,7 +829,9 @@ func startReconciler(eventTypePrefix string, sinkValidator sinkValidator, natsUR
 	logf.SetLogger(zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter)))
 
 	err := eventingv1alpha1.AddToScheme(scheme.Scheme)
-	Expect(err).NotTo(HaveOccurred())
+	It("should add to scheme without error", func() {
+		Expect(err).NotTo(HaveOccurred())
+	})
 
 	syncPeriod := time.Second * 2
 	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
@@ -838,7 +839,9 @@ func startReconciler(eventTypePrefix string, sinkValidator sinkValidator, natsUR
 		SyncPeriod:         &syncPeriod,
 		MetricsBindAddress: ":7070",
 	})
-	Expect(err).ToNot(HaveOccurred())
+	It("should create new manager without error", func() {
+		Expect(err).ToNot(HaveOccurred())
+	})
 
 	envConf := env.NatsConfig{
 		URL:             natsURL,
@@ -852,7 +855,9 @@ func startReconciler(eventTypePrefix string, sinkValidator sinkValidator, natsUR
 	applicationLister := fake.NewApplicationListerOrDie(context.Background(), app)
 
 	defaultLogger, err := logger.New(string(kymalogger.JSON), string(kymalogger.INFO))
-	Expect(err).To(BeNil())
+	It("should create logger without error", func() {
+		Expect(err).To(BeNil())
+	})
 
 	reconciler = NewReconciler(
 		ctx,
@@ -867,18 +872,24 @@ func startReconciler(eventTypePrefix string, sinkValidator sinkValidator, natsUR
 	reconciler.sinkValidator = sinkValidator
 
 	err = reconciler.SetupUnmanaged(k8sManager)
-	Expect(err).ToNot(HaveOccurred())
+	It("should create controller without error", func() {
+		Expect(err).ToNot(HaveOccurred())
+	})
 
 	natsBackend = reconciler.Backend.(*handlers.Nats)
 
 	go func() {
 		defer GinkgoRecover()
 		err = k8sManager.Start(ctx)
-		Expect(err).ToNot(HaveOccurred())
+		It("should start the manager without error", func() {
+			Expect(err).ToNot(HaveOccurred())
+		})
 	}()
 
 	k8sClient = k8sManager.GetClient()
-	Expect(k8sClient).ToNot(BeNil())
+	It("should get K8s client without error", func() {
+		Expect(k8sClient).ToNot(BeNil())
+	})
 
 	return cancel
 }
