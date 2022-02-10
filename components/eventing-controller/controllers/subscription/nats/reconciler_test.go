@@ -642,6 +642,7 @@ func testCreateSubscriptionWithEmptyEventType(id int, eventTypePrefix, _, _ stri
 		})
 	})
 }
+
 //
 //
 //type testCase func(id int, eventTypePrefix, natsSubjectToPublish, eventTypeToSubscribe string) bool
@@ -675,12 +676,24 @@ func testCreateSubscriptionWithEmptyEventType(id int, eventTypePrefix, _, _ stri
 //	}
 //)
 
-
 var _ = Describe("NATS subscription controller reconciler ", func() {
-ctx := context.Background()
+	var id int
+	ctx := context.Background()
 
-	DescribeTable("Create subscription", func(name, expectation string, subscription *eventingv1alpha1.Subscription, subscriptionExpectations, k8sExpectations, natsExpectations []gomegatypes.GomegaMatcher) {
+	subscriberName := fmt.Sprintf(subscriberNameFormat, id)
+	subscriberSvc := reconcilertesting.NewSubscriberSvc(subscriberName, namespaceName)
+	ensureSubscriberSvcCreated(ctx, subscriberSvc)
+
+	AfterEach(func() {
+		id++
+	})
+
+	DescribeTable("Create subscription", func(
+		name, expectation string,
+		subscription *eventingv1alpha1.Subscription,
+		subscriptionExpectations, k8sExpectations, natsExpectations []gomegatypes.GomegaMatcher) {
 		It("should be reconciled properly", func() {
+
 			By("creating a subscription")
 			ensureSubscriptionCreated(ctx, subscription)
 
@@ -697,8 +710,18 @@ ctx := context.Background()
 				//todo
 			}
 		})
-	})
-
+	},
+		Entry(
+			"empty event type",
+			reconcilertesting.NewSubscription(
+				fmt.Sprintf(subscriberNameFormat, id),
+				subscriberSvc.Namespace,
+				reconcilertesting.WithFilter(reconcilertesting.EventSource, ""),
+				reconcilertesting.WithWebhookForNATS(),
+				reconcilertesting.WithSinkURLFromSvc(subscriberSvc),
+			),
+		),
+	)
 })
 
 // getK8sEvents returns all kubernetes events for the given namespace.
