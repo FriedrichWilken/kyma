@@ -9,10 +9,9 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma/components/eventing-controller/pkg/handlers"
+	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/nats-io/nats.go"
 	gomegatypes "github.com/onsi/gomega/types"
-
-	natsserver "github.com/nats-io/nats-server/v2/server"
 	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,7 +26,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 
 	kymalogger "github.com/kyma-project/kyma/common/logging/logger"
@@ -676,276 +674,128 @@ const (
 //)
 
 var _ = Describe("NATS subscription controller reconciler ", func() {
-	var id int
 	ctx := context.Background()
-	var subscriptionName string
+	var id int
+	//var subscriptionName string
+	//var subscriberName string
+  //var subscriberSvc *v1.Service
+
 	subscriberName := fmt.Sprintf(subscriberNameFormat, id)
 	subscriberSvc := reconcilertesting.NewSubscriberSvc(subscriberName, namespaceName)
-	It("todo", func() {
+	It("ensures subscriber gets created", func() {
 		ensureSubscriberSvcCreated(ctx, subscriberSvc)
 	})
 
-	AfterEach(func() {
-		id++
-	})
-
-	DescribeTable("Create subscription", func(
-		expectation string,
-		subsOpt []reconcilertesting.SubscriptionOpt,
-		subscriptionExpectations, k8sExpectations, natsExpectations []gomegatypes.GomegaMatcher) {
-		By("creating a subscription")
-		subscriptionName = fmt.Sprintf(subscriberNameFormat, id)
-		subscription := reconcilertesting.NewSubscription(subscriptionName, subscriberSvc.Namespace,
-			subsOpt...,
-		)
-		ensureSubscriptionCreated(ctx, subscription)
-
-		By("validating subscription")
-		getSubscription(ctx, subscription).Should(And(subscriptionExpectations...))
-
-		if k8sExpectations != nil {
-			By("varifying k8sExpectations")
-			//todo
-		}
-
-		if natsBackend != nil {
-			By("varifying backend")
-			//todo
-		}
-
-	},
-		Entry(
-			"empty event type",
-			"should be marked as 'not ready'",
-			[]reconcilertesting.SubscriptionOpt{
+	var testCases = []struct {
+		name                     string
+		expectations             string
+		subscriptionOpts         []reconcilertesting.SubscriptionOpt
+		subscriptionExpectations []gomegatypes.GomegaMatcher
+		k8sExpectations          []gomegatypes.GomegaMatcher
+		natExpectations          []gomegatypes.GomegaMatcher
+	}{
+		{
+			name:         "empty event type",
+			expectations: "should be marked as not ready",
+			subscriptionOpts: []reconcilertesting.SubscriptionOpt{
 				reconcilertesting.WithFilter(reconcilertesting.EventSource, ""),
 				reconcilertesting.WithWebhookForNATS(),
 				reconcilertesting.WithSinkURLFromSvc(subscriberSvc),
 			},
-			[]gomegatypes.GomegaMatcher{
-				reconcilertesting.HaveSubscriptionName(subscriptionName),
-				reconcilertesting.HaveCondition(eventingv1alpha1.MakeCondition(
-					eventingv1alpha1.ConditionSubscriptionActive,
-					eventingv1alpha1.ConditionReasonNATSSubscriptionActive,
-					v1.ConditionFalse, nats.ErrBadSubject.Error(),
-				)),
+			subscriptionExpectations: []gomegatypes.GomegaMatcher{
+				reconcilertesting.HaveCondition(
+					eventingv1alpha1.MakeCondition(
+						eventingv1alpha1.ConditionSubscriptionActive,
+						eventingv1alpha1.ConditionReasonNATSSubscriptionActive,
+						v1.ConditionFalse, nats.ErrBadSubject.Error(),
+					),
+				),
 			},
-			nil,
-			nil,
-		),
-		Entry(
-			"empty event type",
-			"should be marked as 'not ready'",
-			[]reconcilertesting.SubscriptionOpt{
+			k8sExpectations: nil,
+			natExpectations: nil,
+		},
+		{
+			name:         "empty event type",
+			expectations: "should be marked as not ready",
+			subscriptionOpts: []reconcilertesting.SubscriptionOpt{
 				reconcilertesting.WithFilter(reconcilertesting.EventSource, ""),
 				reconcilertesting.WithWebhookForNATS(),
 				reconcilertesting.WithSinkURLFromSvc(subscriberSvc),
 			},
-			[]gomegatypes.GomegaMatcher{
-				reconcilertesting.HaveSubscriptionName(subscriptionName),
-				reconcilertesting.HaveCondition(eventingv1alpha1.MakeCondition(
-					eventingv1alpha1.ConditionSubscriptionActive,
-					eventingv1alpha1.ConditionReasonNATSSubscriptionActive,
-					v1.ConditionFalse, nats.ErrBadSubject.Error(),
-				)),
+			subscriptionExpectations: []gomegatypes.GomegaMatcher{
+				reconcilertesting.HaveCondition(
+					eventingv1alpha1.MakeCondition(
+						eventingv1alpha1.ConditionSubscriptionActive,
+						eventingv1alpha1.ConditionReasonNATSSubscriptionActive,
+						v1.ConditionFalse, nats.ErrBadSubject.Error(),
+					),
+				),
 			},
-			nil,
-			nil,
-		),
-		Entry(
-			"empty event type",
-			"should be marked as 'not ready'",
-			[]reconcilertesting.SubscriptionOpt{
+			k8sExpectations: nil,
+			natExpectations: nil,
+		},
+		{
+			name:         "empty event type",
+			expectations: "should be marked as not ready",
+			subscriptionOpts: []reconcilertesting.SubscriptionOpt{
 				reconcilertesting.WithFilter(reconcilertesting.EventSource, ""),
 				reconcilertesting.WithWebhookForNATS(),
 				reconcilertesting.WithSinkURLFromSvc(subscriberSvc),
 			},
-			[]gomegatypes.GomegaMatcher{
-				reconcilertesting.HaveSubscriptionName(subscriptionName),
-				reconcilertesting.HaveCondition(eventingv1alpha1.MakeCondition(
-					eventingv1alpha1.ConditionSubscriptionActive,
-					eventingv1alpha1.ConditionReasonNATSSubscriptionActive,
-					v1.ConditionFalse, nats.ErrBadSubject.Error(),
-				)),
+			subscriptionExpectations: []gomegatypes.GomegaMatcher{
+				reconcilertesting.HaveCondition(
+					eventingv1alpha1.MakeCondition(
+						eventingv1alpha1.ConditionSubscriptionActive,
+						eventingv1alpha1.ConditionReasonNATSSubscriptionActive,
+						v1.ConditionFalse, nats.ErrBadSubject.Error(),
+					),
+				),
 			},
-			nil,
-			nil,
-		),
-		Entry(
-			"empty event type",
-			"should be marked as 'not ready'",
-			[]reconcilertesting.SubscriptionOpt{
+			k8sExpectations: nil,
+			natExpectations: nil,
+		},
+		{
+			name:         "empty event type",
+			expectations: "should be marked as not ready",
+			subscriptionOpts: []reconcilertesting.SubscriptionOpt{
 				reconcilertesting.WithFilter(reconcilertesting.EventSource, ""),
 				reconcilertesting.WithWebhookForNATS(),
 				reconcilertesting.WithSinkURLFromSvc(subscriberSvc),
 			},
-			[]gomegatypes.GomegaMatcher{
-				reconcilertesting.HaveSubscriptionName(subscriptionName),
-				reconcilertesting.HaveCondition(eventingv1alpha1.MakeCondition(
-					eventingv1alpha1.ConditionSubscriptionActive,
-					eventingv1alpha1.ConditionReasonNATSSubscriptionActive,
-					v1.ConditionFalse, nats.ErrBadSubject.Error(),
-				)),
+			subscriptionExpectations: []gomegatypes.GomegaMatcher{
+				reconcilertesting.HaveCondition(
+					eventingv1alpha1.MakeCondition(
+						eventingv1alpha1.ConditionSubscriptionActive,
+						eventingv1alpha1.ConditionReasonNATSSubscriptionActive,
+						v1.ConditionFalse, nats.ErrBadSubject.Error(),
+					),
+				),
 			},
-			nil,
-			nil,
-		),
-		Entry(
-			"empty event type",
-			"should be marked as 'not ready'",
-			[]reconcilertesting.SubscriptionOpt{
-				reconcilertesting.WithFilter(reconcilertesting.EventSource, ""),
-				reconcilertesting.WithWebhookForNATS(),
-				reconcilertesting.WithSinkURLFromSvc(subscriberSvc),
-			},
-			[]gomegatypes.GomegaMatcher{
-				reconcilertesting.HaveSubscriptionName(subscriptionName),
-				reconcilertesting.HaveCondition(eventingv1alpha1.MakeCondition(
-					eventingv1alpha1.ConditionSubscriptionActive,
-					eventingv1alpha1.ConditionReasonNATSSubscriptionActive,
-					v1.ConditionFalse, nats.ErrBadSubject.Error(),
-				)),
-			},
-			nil,
-			nil,
-		),
-	)
-})
-var _ = Describe("NATS subscription controller reconciler ", func() {
-	var id int
-	ctx := context.Background()
-	var subscriptionName string
-	subscriberName := fmt.Sprintf(subscriberNameFormat, id)
-	subscriberSvc := reconcilertesting.NewSubscriberSvc(subscriberName, namespaceName)
-	It("todo", func() {
-		ensureSubscriberSvcCreated(ctx, subscriberSvc)
-	})
+			k8sExpectations: nil,
+			natExpectations: nil,
+		},
+	}
 
-	AfterEach(func() {
-		id++
-	})
+	for _, c := range testCases {
+		Context(c.name, func() {
+			It(c.expectations, func() {
+				id++
+				subscriptionName := fmt.Sprintf(subscriptionNameFormat, id)
 
-	DescribeTable("Create subscription", func(
-		expectation string,
-		subsOpt []reconcilertesting.SubscriptionOpt,
-		subscriptionExpectations, k8sExpectations, natsExpectations []gomegatypes.GomegaMatcher) {
-		By("creating a subscription")
-		subscriptionName = fmt.Sprintf(subscriberNameFormat, id)
-		subscription := reconcilertesting.NewSubscription(subscriptionName, subscriberSvc.Namespace,
-			subsOpt...,
-		)
-		ensureSubscriptionCreated(ctx, subscription)
+				By("creating the subscription")
+				subscription := reconcilertesting.NewSubscription(
+					subscriptionName,
+					subscriberSvc.Namespace,
+					c.subscriptionOpts...
+				)
+				ensureSubscriptionCreated(ctx, subscription)
 
-		By("validating subscription")
-		getSubscription(ctx, subscription).Should(And(subscriptionExpectations...))
-
-		if k8sExpectations != nil {
-			By("varifying k8sExpectations")
-			//todo
-		}
-
-		if natsBackend != nil {
-			By("varifying backend")
-			//todo
-		}
-
-	},
-		Entry(
-			"empty event type",
-			"should be marked as 'not ready'",
-			[]reconcilertesting.SubscriptionOpt{
-				reconcilertesting.WithFilter(reconcilertesting.EventSource, ""),
-				reconcilertesting.WithWebhookForNATS(),
-				reconcilertesting.WithSinkURLFromSvc(subscriberSvc),
-			},
-			[]gomegatypes.GomegaMatcher{
-				reconcilertesting.HaveSubscriptionName(subscriptionName),
-				reconcilertesting.HaveCondition(eventingv1alpha1.MakeCondition(
-					eventingv1alpha1.ConditionSubscriptionActive,
-					eventingv1alpha1.ConditionReasonNATSSubscriptionActive,
-					v1.ConditionFalse, nats.ErrBadSubject.Error(),
-				)),
-			},
-			nil,
-			nil,
-		),
-		Entry(
-			"empty event type",
-			"should be marked as 'not ready'",
-			[]reconcilertesting.SubscriptionOpt{
-				reconcilertesting.WithFilter(reconcilertesting.EventSource, ""),
-				reconcilertesting.WithWebhookForNATS(),
-				reconcilertesting.WithSinkURLFromSvc(subscriberSvc),
-			},
-			[]gomegatypes.GomegaMatcher{
-				reconcilertesting.HaveSubscriptionName(subscriptionName),
-				reconcilertesting.HaveCondition(eventingv1alpha1.MakeCondition(
-					eventingv1alpha1.ConditionSubscriptionActive,
-					eventingv1alpha1.ConditionReasonNATSSubscriptionActive,
-					v1.ConditionFalse, nats.ErrBadSubject.Error(),
-				)),
-			},
-			nil,
-			nil,
-		),
-		Entry(
-			"empty event type",
-			"should be marked as 'not ready'",
-			[]reconcilertesting.SubscriptionOpt{
-				reconcilertesting.WithFilter(reconcilertesting.EventSource, ""),
-				reconcilertesting.WithWebhookForNATS(),
-				reconcilertesting.WithSinkURLFromSvc(subscriberSvc),
-			},
-			[]gomegatypes.GomegaMatcher{
-				reconcilertesting.HaveSubscriptionName(subscriptionName),
-				reconcilertesting.HaveCondition(eventingv1alpha1.MakeCondition(
-					eventingv1alpha1.ConditionSubscriptionActive,
-					eventingv1alpha1.ConditionReasonNATSSubscriptionActive,
-					v1.ConditionFalse, nats.ErrBadSubject.Error(),
-				)),
-			},
-			nil,
-			nil,
-		),
-		Entry(
-			"empty event type",
-			"should be marked as 'not ready'",
-			[]reconcilertesting.SubscriptionOpt{
-				reconcilertesting.WithFilter(reconcilertesting.EventSource, ""),
-				reconcilertesting.WithWebhookForNATS(),
-				reconcilertesting.WithSinkURLFromSvc(subscriberSvc),
-			},
-			[]gomegatypes.GomegaMatcher{
-				reconcilertesting.HaveSubscriptionName(subscriptionName),
-				reconcilertesting.HaveCondition(eventingv1alpha1.MakeCondition(
-					eventingv1alpha1.ConditionSubscriptionActive,
-					eventingv1alpha1.ConditionReasonNATSSubscriptionActive,
-					v1.ConditionFalse, nats.ErrBadSubject.Error(),
-				)),
-			},
-			nil,
-			nil,
-		),
-		Entry(
-			"empty event type",
-			"should be marked as 'not ready'",
-			[]reconcilertesting.SubscriptionOpt{
-				reconcilertesting.WithFilter(reconcilertesting.EventSource, ""),
-				reconcilertesting.WithWebhookForNATS(),
-				reconcilertesting.WithSinkURLFromSvc(subscriberSvc),
-			},
-			[]gomegatypes.GomegaMatcher{
-				reconcilertesting.HaveSubscriptionName(subscriptionName),
-				reconcilertesting.HaveCondition(eventingv1alpha1.MakeCondition(
-					eventingv1alpha1.ConditionSubscriptionActive,
-					eventingv1alpha1.ConditionReasonNATSSubscriptionActive,
-					v1.ConditionFalse, nats.ErrBadSubject.Error(),
-				)),
-			},
-			nil,
-			nil,
-		),
-	)
+				By("validating the subscription")
+				subscriptionExpectations := append(c.subscriptionExpectations, reconcilertesting.HaveSubscriptionName(subscriptionName))
+				getSubscription(ctx, subscription).Should(And(subscriptionExpectations...))
+			})
+		})
+	}
 })
 
 // getK8sEvents returns all kubernetes events for the given namespace.
