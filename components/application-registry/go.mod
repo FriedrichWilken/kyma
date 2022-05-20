@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
 	github.com/go-openapi/spec v0.19.5
-	github.com/gofrs/uuid v4.0.0+incompatible
+	github.com/gofrs/uuid v4.2.0+incompatible
 	github.com/gorilla/mux v1.8.0
 	github.com/kyma-project/kyma/components/application-gateway v0.0.0-20211110103247-3aa24a88caa2
 	github.com/kyma-project/kyma/components/application-operator v0.0.0-20211110074047-13002528fca2
