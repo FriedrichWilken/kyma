@@ -16,10 +16,8 @@ func Test_InitializeSubscriptionConditions(t *testing.T) {
 		givenConditions []Condition
 	}{
 		{
-			name: "Conditions empty",
-			givenConditions: func() []Condition {
-				return MakeSubscriptionConditions()
-			}(),
+			name:            "Conditions empty",
+			givenConditions: MakeSubscriptionConditions(),
 		},
 		{
 			name: "Conditions partially initialized",
